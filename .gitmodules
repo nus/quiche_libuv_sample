@@ -1,0 +1,9 @@
+[submodule "third_party/quiche"]
+	path = third_party/quiche
+	url = https://github.com/cloudflare/quiche.git
+[submodule "third_party/libuv"]
+	path = third_party/libuv
+	url = https://github.com/libuv/libuv.git
+[submodule "third_party/uthash"]
+	path = third_party/uthash
+	url = https://github.com/troydhanson/uthash.git
