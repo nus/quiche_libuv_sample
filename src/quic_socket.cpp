@@ -45,22 +45,8 @@ ssize_t QuicSocket::receive(uint8_t *buf, size_t buf_len) {
     return quiche_conn_recv(q_conn, buf, buf_len);
 }
 
-bool QuicSocket::send(UdpSocket *udp_socket) {
-    while (1) {
-        uint8_t out[MAX_DATAGRAM_SIZE];
-        ssize_t written = quiche_conn_send(q_conn, out, sizeof(out));
-        if (written == EQUIC_SOCKET_DONE) {
-            LOG_ERROR("quic_socket->send() done.");
-            break;
-        } else if (written < 0) {
-            LOG_ERROR("quic_socket->send() failed. %ld", written);
-            return false;
-        }
-
-        udp_socket->send(out, written, context);
-    }
-
-    return true;
+ssize_t QuicSocket::send(uint8_t *buf, size_t buf_len) {
+    return quiche_conn_send(q_conn, buf, buf_len);
 }
 
 bool QuicSocket::is_established() {

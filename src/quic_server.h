@@ -43,6 +43,8 @@ private:
 
     void restart_timer(ServerContext *server_context);
 
+    bool flush_egress(QuicSocket *quic_socket, std::shared_ptr<UdpReceiveContext> context);
+
     uv_loop_t *loop;
     UdpSocket *udp_socket;
 

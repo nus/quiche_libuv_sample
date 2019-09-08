@@ -7,10 +7,11 @@
 
 class ServerContext {
 public:
-    ServerContext(QuicSocket *q, QuicServer *s, const std::vector<uint8_t> &c) : quic_socket(q), quic_server(s), connection_id(c) {}
+    ServerContext(QuicSocket *q, QuicServer *s, std::shared_ptr<UdpReceiveContext> urc, const std::vector<uint8_t> &c) : quic_socket(q), quic_server(s), udp_receive_context(urc), connection_id(c) {}
     uv_timer_t timeout;
     QuicSocket *quic_socket;
     QuicServer *quic_server;
+    std::shared_ptr<UdpReceiveContext> udp_receive_context;
     const std::vector<uint8_t> connection_id;
 };
 
@@ -155,7 +156,7 @@ void QuicServer::udp_socket_on_receive(ssize_t nread, uint8_t *buf, const struct
 
         ServerContext *server_context = it->second;
         QuicSocket *quic_socket = server_context->quic_socket;
-        quic_socket->send(udp_socket);
+        flush_egress(quic_socket, context);
         restart_timer(server_context);
 
         if (quic_socket->is_closed()) {
@@ -255,7 +256,7 @@ QuicSocket *QuicServer::create_quic_socket(uint8_t *odcid, size_t odcid_len, std
 
     LOG_DEBUG("accepted.");
 
-    ServerContext *server_context = new ServerContext(qsock, this, qsock->src_conn_id);
+    ServerContext *server_context = new ServerContext(qsock, this, context, qsock->src_conn_id);
 
     uv_timer_init(loop, &server_context->timeout);
     server_context->timeout.data = server_context;
@@ -273,6 +274,29 @@ void QuicServer::restart_timer(ServerContext *server_context) {
     uv_timer_again(&server_context->timeout);
 }
 
+bool QuicServer::flush_egress(QuicSocket *quic_socket, std::shared_ptr<UdpReceiveContext> context) {
+    if (!quic_socket) {
+        LOG_ERROR("quic_socket must be not null.");
+        return false;
+    }
+
+    while (1) {
+        uint8_t out[MAX_DATAGRAM_SIZE];
+        ssize_t written = quic_socket->send(out, sizeof(out));
+        if (written == EQUIC_SOCKET_DONE) {
+            LOG_ERROR("quic_socket->send() done.");
+            break;
+        } else if (written < 0) {
+            LOG_ERROR("quic_socket->send() failed. %ld", written);
+            return false;
+        }
+
+        udp_socket->send(out, written, context);
+    }
+
+    return true;
+}
+
 void QuicServer::timeout_callback(uv_timer_t *timer) {
     ServerContext *server_context = reinterpret_cast<ServerContext*>(timer->data);
     QuicSocket *quic_socket = server_context->quic_socket;
@@ -282,7 +306,7 @@ void QuicServer::timeout_callback(uv_timer_t *timer) {
 
     quic_socket->on_timeout();
 
-    quic_socket->send(quic_server->udp_socket);
+    quic_server->flush_egress(quic_socket, server_context->udp_receive_context);
     quic_server->restart_timer(server_context);
 
     if (quic_socket->is_closed()) {

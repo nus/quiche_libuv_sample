@@ -36,7 +36,7 @@ public:
     const std::vector<uint8_t> src_conn_id;
 
     ssize_t receive(uint8_t *buf, size_t buf_len);
-    bool send(UdpSocket *udp_socket);
+    ssize_t send(uint8_t *buf, size_t buf_len);
     bool is_established();
     IQuicStreamIter *readable();
     ssize_t stream_receive(uint64_t stream_id, uint8_t *buf, size_t buf_len, bool *finished);
