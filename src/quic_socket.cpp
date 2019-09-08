@@ -2,7 +2,9 @@
 #include "quic_header_info.h"
 #include "log.h"
 
+#include <fcntl.h>
 #include <unistd.h>
+#include <sys/errno.h>
 
 #define MAX_DATAGRAM_SIZE (1350)
 
@@ -28,12 +30,10 @@ bool QuicStreamIter::next(uint64_t *stream_id) {
     return !!quiche_stream_iter_next(iter, stream_id);
 }
 
-QuicSocket::QuicSocket(quiche_conn *q_conn_, quiche_config *q_config_, std::vector<uint8_t> src_conn_id_,
-                       std::shared_ptr<UdpReceiveContext> context_)
+QuicSocket::QuicSocket(quiche_conn *q_conn_, quiche_config *q_config_, std::vector<uint8_t> src_conn_id_)
     : q_conn(q_conn_)
     , q_config(q_config_)
-    , src_conn_id(std::move(src_conn_id_))
-    , context(context_) {
+    , src_conn_id(std::move(src_conn_id_)) {
 }
 
 QuicSocket::~QuicSocket() {
@@ -89,7 +89,7 @@ bool QuicSocket::is_closed() {
     return !!quiche_conn_is_closed(q_conn);
 }
 
-QuicSocket *QuicSocket::accept(uint8_t *odcid, size_t odcid_len, std::shared_ptr<UdpReceiveContext> context) {
+QuicSocket *QuicSocket::accept(uint8_t *odcid, size_t odcid_len) {
     int rng = open("/dev/urandom", O_RDONLY);
     if (rng < 0) {
         LOG_ERROR("open(/dev/urandom) failed. %d", errno);
@@ -122,7 +122,7 @@ QuicSocket *QuicSocket::accept(uint8_t *odcid, size_t odcid_len, std::shared_ptr
 
     QuicSocket *qsock = nullptr;
     try {
-        qsock = new QuicSocket(conn, config, std::move(src_conn_id), context);
+        qsock = new QuicSocket(conn, config, std::move(src_conn_id));
     } catch(std::bad_alloc e) {
         LOG_ERROR("QuicSocket::QuicSocket failed. %s", e.what());
         quiche_config_free(config);

@@ -248,7 +248,7 @@ bool QuicServer::quic_mint_token(const std::vector<uint8_t> &dst_conn_id, const 
 }
 
 QuicSocket *QuicServer::create_quic_socket(uint8_t *odcid, size_t odcid_len, std::shared_ptr<UdpReceiveContext> context) {
-    QuicSocket *qsock = QuicSocket::accept(odcid, odcid_len, context);
+    QuicSocket *qsock = QuicSocket::accept(odcid, odcid_len);
     if (!qsock) {
         LOG_ERROR("QuickSocket::accept() failed.");
         return nullptr;
@@ -284,7 +284,7 @@ bool QuicServer::flush_egress(QuicSocket *quic_socket, std::shared_ptr<UdpReceiv
         uint8_t out[MAX_DATAGRAM_SIZE];
         ssize_t written = quic_socket->send(out, sizeof(out));
         if (written == EQUIC_SOCKET_DONE) {
-            LOG_ERROR("quic_socket->send() done.");
+            LOG_DEBUG("quic_socket->send() done.");
             break;
         } else if (written < 0) {
             LOG_ERROR("quic_socket->send() failed. %ld", written);

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "udp_socket.h"
-
 #include <stdio.h>
 #include <quiche.h>
 #include <vector>
@@ -45,16 +43,14 @@ public:
     void on_timeout();
     bool is_closed();
 
-    static QuicSocket *accept(uint8_t *odcid, size_t odcid_len, std::shared_ptr<UdpReceiveContext> context);
+    static QuicSocket *accept(uint8_t *odcid, size_t odcid_len);
 
 
 private:
-    QuicSocket(quiche_conn *q_conn_, quiche_config *q_config_, std::vector<uint8_t> src_conn_id_,
-               std::shared_ptr<UdpReceiveContext> context);
+    QuicSocket(quiche_conn *q_conn_, quiche_config *q_config_, std::vector<uint8_t> src_conn_id_);
 
     quiche_conn *q_conn;
     quiche_config *q_config;
-    const std::shared_ptr<UdpReceiveContext> context;
 
     static quiche_config *generate_quiche_config();
 };
