@@ -269,7 +269,7 @@ QuicSocket *QuicServer::create_quic_socket(uint8_t *odcid, size_t odcid_len, std
 }
 
 void QuicServer::restart_timer(ServerContext *server_context) {
-    double millis = server_context->quic_socket->timeout_as_nanos() / 1e6f;
+    uint64_t millis = server_context->quic_socket->timeout_as_millis();
     uv_timer_set_repeat(&server_context->timeout, millis);
     uv_timer_again(&server_context->timeout);
 }

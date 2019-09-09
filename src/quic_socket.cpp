@@ -77,8 +77,8 @@ ssize_t QuicSocket::stream_send(uint64_t stream_id, const uint8_t *buf, size_t b
     return quiche_conn_stream_send(q_conn, stream_id, buf, buf_len, finished);
 }
 
-uint64_t QuicSocket::timeout_as_nanos() {
-    return quiche_conn_timeout_as_nanos(q_conn);
+uint64_t QuicSocket::timeout_as_millis() {
+    return quiche_conn_timeout_as_millis(q_conn);
 }
 
 void QuicSocket::on_timeout() {

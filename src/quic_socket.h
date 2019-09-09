@@ -39,7 +39,7 @@ public:
     IQuicStreamIter *readable();
     ssize_t stream_receive(uint64_t stream_id, uint8_t *buf, size_t buf_len, bool *finished);
     ssize_t stream_send(uint64_t stream_id, const uint8_t *buf, size_t buf_len, bool finished);
-    uint64_t timeout_as_nanos();
+    uint64_t timeout_as_millis();
     void on_timeout();
     bool is_closed();
 
