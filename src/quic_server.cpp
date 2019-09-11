@@ -70,7 +70,7 @@ void QuicServer::udp_socket_on_receive(ssize_t nread, uint8_t *buf, const struct
     }
     if (quic_socket == nullptr) {
         if (header_info->version != QUICHE_PROTOCOL_VERSION) {
-            static uint8_t out[MAX_DATAGRAM_SIZE];
+            uint8_t out[MAX_DATAGRAM_SIZE];
             size_t out_len = MAX_DATAGRAM_SIZE;
             LOG_DEBUG("version negotiation");
             if (!quic_version_packet(header_info->src_conn_id, header_info->dst_conn_id, out, &out_len)) {
@@ -84,7 +84,7 @@ void QuicServer::udp_socket_on_receive(ssize_t nread, uint8_t *buf, const struct
         if (header_info->token.size() == 0) {
             socklen_t peer_addr_len = sizeof(*addr);
             std::vector<uint8_t> token;
-            static uint8_t out[MAX_DATAGRAM_SIZE];
+            uint8_t out[MAX_DATAGRAM_SIZE];
             size_t out_len = MAX_DATAGRAM_SIZE;
 
             if (!quic_mint_token(header_info->dst_conn_id, addr, peer_addr_len, token)) {
@@ -134,7 +134,7 @@ void QuicServer::udp_socket_on_receive(ssize_t nread, uint8_t *buf, const struct
             while (iter->next(&stream_id)) {
                 LOG_DEBUG("stream %lld is readable.", stream_id);
 
-                static uint8_t b[1024] = {0};
+                uint8_t b[1024] = {0};
                 bool finished = false;
                 ssize_t recv_len = quic_socket->stream_receive(stream_id, b, sizeof(b), &finished);
                 if (recv_len < 0) {
