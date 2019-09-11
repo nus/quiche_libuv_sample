@@ -9,6 +9,23 @@
 
 class ServerContext;
 
+class IQuicServerConnection {
+public:
+    virtual void stream_send(uint64_t stream_id, uint8_t *buf, size_t buf_len, bool finish) = 0;
+    virtual std::vector<uint8_t> get_connection_id() = 0;
+    virtual ~IQuicServerConnection() {}
+
+    void *data;
+};
+
+class IQuicServerCallback {
+public:
+    virtual void on_connect(IQuicServerConnection *connection) = 0;
+    virtual void on_receive(IQuicServerConnection *connection, uint64_t stream_id, uint8_t *buf, size_t buf_len, bool finished) = 0;
+    virtual void on_disconnect(IQuicServerConnection *connection) = 0;
+    virtual ~IQuicServerCallback() {};
+};
+
 class QuicServer : private IUdpSocketCallback {
 private:
     static void timeout_callback(uv_timer_t *timer);
@@ -17,9 +34,10 @@ public:
     QuicServer();
     ~QuicServer();
 
-    bool bind(const char *ip, int port);
-    void start_receive();
-    int run_loop();
+    void set_callback(IQuicServerCallback *callback);
+
+    bool listen(const char *ip, int port);
+    int run_loop(); 
 
 private:
     virtual void udp_socket_on_receive(ssize_t nread, uint8_t *buf, const struct sockaddr *addr, void *data, std::shared_ptr<UdpReceiveContext> context);
@@ -47,6 +65,7 @@ private:
 
     uv_loop_t *loop;
     UdpSocket *udp_socket;
+    IQuicServerCallback *callback;
 
     std::map<std::vector<uint8_t>, ServerContext *> quic_sockets;
 };

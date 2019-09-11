@@ -5,14 +5,29 @@
 
 #define MAX_DATAGRAM_SIZE (1350)
 
-class ServerContext {
+class ServerContext : public IQuicServerConnection{
 public:
-    ServerContext(QuicSocket *q, QuicServer *s, std::shared_ptr<UdpReceiveContext> urc, const std::vector<uint8_t> &c) : quic_socket(q), quic_server(s), udp_receive_context(urc), connection_id(c) {}
+    ServerContext(QuicSocket *q, QuicServer *s, std::shared_ptr<UdpReceiveContext> urc, const std::vector<uint8_t> &c)
+        : quic_socket(q)
+        , quic_server(s)
+        , udp_receive_context(urc)
+        , connection_id(c)
+        , is_on_connect_called(false) {}
     uv_timer_t timeout;
     QuicSocket *quic_socket;
     QuicServer *quic_server;
     std::shared_ptr<UdpReceiveContext> udp_receive_context;
     const std::vector<uint8_t> connection_id;
+    bool is_on_connect_called;
+    IQuicServerConnection *connection;
+
+    virtual void stream_send(uint64_t stream_id, uint8_t *buf, size_t buf_len, bool finish) {
+        quic_socket->stream_send(stream_id, (const uint8_t *)buf, buf_len, finish);
+    }
+
+    virtual std::vector<uint8_t> get_connection_id() {
+        return connection_id;
+    }
 };
 
 static void LOG_CONNECTION_ID(const std::vector<uint8_t> &cid) {
@@ -36,6 +51,10 @@ QuicServer::QuicServer()
 
 QuicServer::~QuicServer() {
     delete udp_socket;
+}
+
+void QuicServer::set_callback(IQuicServerCallback *callback_) {
+    callback = callback_;
 }
 
 bool QuicServer::listen(const char *ip, int port) {
@@ -124,6 +143,10 @@ void QuicServer::udp_socket_on_receive(ssize_t nread, uint8_t *buf, const struct
 
     if (quic_socket->is_established()) {
         LOG_DEBUG("is_established.");
+        if (callback && !server_context->is_on_connect_called) {
+            callback->on_connect(server_context);
+            server_context->is_on_connect_called = true;
+        }
 
         uint64_t stream_id = 0;
         IQuicStreamIter *iter = quic_socket->readable();
@@ -138,10 +161,8 @@ void QuicServer::udp_socket_on_receive(ssize_t nread, uint8_t *buf, const struct
                     break;
                 }
                 LOG_DEBUG("received %zd, %s", recv_len, b);
-
-                if (finished) {
-                    const char *resp = "byez!\n";
-                    quic_socket->stream_send(stream_id, (const uint8_t *)resp, sizeof(resp), true);
+                if (callback) {
+                    callback->on_receive(server_context, stream_id, b, recv_len, finished);
                 }
             }
             delete iter;
@@ -157,6 +178,10 @@ void QuicServer::udp_socket_on_receive(ssize_t nread, uint8_t *buf, const struct
         restart_timer(server_context);
 
         if (quic_socket->is_closed()) {
+            if (callback) {
+                callback->on_disconnect(server_context);
+            }
+
             quic_sockets.erase(it);
 
             uv_timer_stop(&server_context->timeout);
@@ -312,6 +337,10 @@ void QuicServer::timeout_callback(uv_timer_t *timer) {
         quic_server->quic_sockets.erase(server_context->connection_id);
 
         uv_timer_stop(&server_context->timeout);
+
+        if (quic_server->callback) {
+            quic_server->callback->on_disconnect(server_context);
+        }
 
         delete quic_socket;
         delete server_context;
