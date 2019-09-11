@@ -270,6 +270,7 @@ QuicSocket *QuicServer::create_quic_socket(uint8_t *odcid, size_t odcid_len, std
 
 void QuicServer::restart_timer(ServerContext *server_context) {
     uint64_t millis = server_context->quic_socket->timeout_as_millis();
+    LOG_DEBUG("restart_timer: %llu", millis);
     uv_timer_set_repeat(&server_context->timeout, millis);
     uv_timer_again(&server_context->timeout);
 }
@@ -310,6 +311,7 @@ void QuicServer::timeout_callback(uv_timer_t *timer) {
     quic_server->restart_timer(server_context);
 
     if (quic_socket->is_closed()) {
+        LOG_CONNECTION_ID(server_context->connection_id);
         quic_server->quic_sockets.erase(server_context->connection_id);
 
         uv_timer_stop(&server_context->timeout);
