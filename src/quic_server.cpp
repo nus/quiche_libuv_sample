@@ -38,13 +38,10 @@ QuicServer::~QuicServer() {
     delete udp_socket;
 }
 
-bool QuicServer::bind(const char *ip, int port) {
+bool QuicServer::listen(const char *ip, int port) {
     udp_socket->bind(ip, port);
-    return true;
-}
-
-void QuicServer::start_receive() {
     udp_socket->start_receive(this, this);
+    return true;
 }
 
 int QuicServer::run_loop() {
