@@ -40,7 +40,9 @@ static void LOG_CONNECTION_ID(const std::vector<uint8_t> &cid) {
 }
 
 static void debug_log(const char *line, void *argp) {
-    // LOG_DEBUG("quiche-log %s", line);
+#if 0
+    LOG_DEBUG("quiche-log %s", line);
+#endif
 }
 
 QuicServer::QuicServer()

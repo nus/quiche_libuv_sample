@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 add_executable(server
-  main.cpp
+  server.cpp
   udp_socket.cpp
   quic_server.cpp
   quic_socket.cpp
