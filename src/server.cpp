@@ -1,5 +1,5 @@
 #include "udp_socket.h"
-#include "quic_socket.h"
+#include "quic_connection.h"
 #include "log.h"
 
 #include "quic_server.h"

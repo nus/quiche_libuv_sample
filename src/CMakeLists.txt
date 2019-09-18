@@ -4,7 +4,7 @@ add_executable(server
   server.cpp
   udp_socket.cpp
   quic_server.cpp
-  quic_socket.cpp
+  quic_connection.cpp
   quic_header_info.cpp
 )
 

@@ -1,4 +1,4 @@
-#include "quic_socket.h"
+#include "quic_connection.h"
 #include "quic_header_info.h"
 #include "log.h"
 
@@ -30,30 +30,30 @@ bool QuicStreamIter::next(uint64_t *stream_id) {
     return !!quiche_stream_iter_next(iter, stream_id);
 }
 
-QuicSocket::QuicSocket(quiche_conn *q_conn_, quiche_config *q_config_, std::vector<uint8_t> src_conn_id_)
+QuicConnection::QuicConnection(quiche_conn *q_conn_, quiche_config *q_config_, std::vector<uint8_t> src_conn_id_)
     : q_conn(q_conn_)
     , q_config(q_config_)
     , src_conn_id(std::move(src_conn_id_)) {
 }
 
-QuicSocket::~QuicSocket() {
+QuicConnection::~QuicConnection() {
     quiche_conn_free(q_conn);
     quiche_config_free(q_config);
 }
 
-ssize_t QuicSocket::receive(uint8_t *buf, size_t buf_len) {
+ssize_t QuicConnection::receive(uint8_t *buf, size_t buf_len) {
     return quiche_conn_recv(q_conn, buf, buf_len);
 }
 
-ssize_t QuicSocket::send(uint8_t *buf, size_t buf_len) {
+ssize_t QuicConnection::send(uint8_t *buf, size_t buf_len) {
     return quiche_conn_send(q_conn, buf, buf_len);
 }
 
-bool QuicSocket::is_established() {
+bool QuicConnection::is_established() {
     return !!quiche_conn_is_established(q_conn);
 }
 
-IQuicStreamIter *QuicSocket::readable() {
+IQuicStreamIter *QuicConnection::readable() {
     quiche_stream_iter *iter = quiche_conn_readable(q_conn);
     if (!iter) {
         LOG_ERROR("quiche_conn_readable() failed().");
@@ -69,27 +69,27 @@ IQuicStreamIter *QuicSocket::readable() {
     }
 }
 
-ssize_t QuicSocket::stream_receive(uint64_t stream_id, uint8_t *buf, size_t buf_len, bool *finished) {
+ssize_t QuicConnection::stream_receive(uint64_t stream_id, uint8_t *buf, size_t buf_len, bool *finished) {
     return quiche_conn_stream_recv(q_conn, stream_id, buf, buf_len, finished);
 }
 
-ssize_t QuicSocket::stream_send(uint64_t stream_id, const uint8_t *buf, size_t buf_len, bool finished) {
+ssize_t QuicConnection::stream_send(uint64_t stream_id, const uint8_t *buf, size_t buf_len, bool finished) {
     return quiche_conn_stream_send(q_conn, stream_id, buf, buf_len, finished);
 }
 
-uint64_t QuicSocket::timeout_as_millis() {
+uint64_t QuicConnection::timeout_as_millis() {
     return quiche_conn_timeout_as_millis(q_conn);
 }
 
-void QuicSocket::on_timeout() {
+void QuicConnection::on_timeout() {
     quiche_conn_on_timeout(q_conn);
 }
 
-bool QuicSocket::is_closed() {
+bool QuicConnection::is_closed() {
     return !!quiche_conn_is_closed(q_conn);
 }
 
-QuicSocket *QuicSocket::accept(uint8_t *odcid, size_t odcid_len) {
+QuicConnection *QuicConnection::accept(uint8_t *odcid, size_t odcid_len) {
     int rng = open("/dev/urandom", O_RDONLY);
     if (rng < 0) {
         LOG_ERROR("open(/dev/urandom) failed. %d", errno);
@@ -105,9 +105,9 @@ QuicSocket *QuicSocket::accept(uint8_t *odcid, size_t odcid_len) {
     }
     close(rng);
 
-    quiche_config *config = QuicSocket::generate_quiche_config();
+    quiche_config *config = QuicConnection::generate_quiche_config();
     if (!config) {
-        LOG_ERROR("QuicSocket::generate_quiche_config() failed.");
+        LOG_ERROR("QuicConnection::generate_quiche_config() failed.");
         return nullptr;
     }
 
@@ -120,11 +120,11 @@ QuicSocket *QuicSocket::accept(uint8_t *odcid, size_t odcid_len) {
 
     std::vector<uint8_t> src_conn_id(cid, cid + LOCAL_CONN_ID_LEN);
 
-    QuicSocket *qsock = nullptr;
+    QuicConnection *qsock = nullptr;
     try {
-        qsock = new QuicSocket(conn, config, std::move(src_conn_id));
+        qsock = new QuicConnection(conn, config, std::move(src_conn_id));
     } catch(std::bad_alloc e) {
-        LOG_ERROR("QuicSocket::QuicSocket failed. %s", e.what());
+        LOG_ERROR("QuicConnection::QuicConnection failed. %s", e.what());
         quiche_config_free(config);
         return nullptr;
     }
@@ -132,7 +132,7 @@ QuicSocket *QuicSocket::accept(uint8_t *odcid, size_t odcid_len) {
     return qsock;
 }
 
-quiche_config *QuicSocket::generate_quiche_config() {
+quiche_config *QuicConnection::generate_quiche_config() {
     quiche_config *config = NULL;
 
     if (!(config = quiche_config_new(QUICHE_PROTOCOL_VERSION))) {

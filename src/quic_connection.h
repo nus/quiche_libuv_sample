@@ -27,9 +27,9 @@ public:
     virtual ~IQuicStreamIter() {};
 };
 
-class QuicSocket {
+class QuicConnection {
 public:
-    ~QuicSocket();
+    ~QuicConnection();
 
     const std::vector<uint8_t> src_conn_id;
 
@@ -43,11 +43,11 @@ public:
     void on_timeout();
     bool is_closed();
 
-    static QuicSocket *accept(uint8_t *odcid, size_t odcid_len);
+    static QuicConnection *accept(uint8_t *odcid, size_t odcid_len);
 
 
 private:
-    QuicSocket(quiche_conn *q_conn_, quiche_config *q_config_, std::vector<uint8_t> src_conn_id_);
+    QuicConnection(quiche_conn *q_conn_, quiche_config *q_config_, std::vector<uint8_t> src_conn_id_);
 
     quiche_conn *q_conn;
     quiche_config *q_config;

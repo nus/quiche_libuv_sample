@@ -1,7 +1,7 @@
 #pragma once
 
 #include "udp_socket.h"
-#include "quic_socket.h"
+#include "quic_connection.h"
 
 #include <map>
 #include <vector>
@@ -57,11 +57,11 @@ private:
     bool quic_mint_token(const std::vector<uint8_t> &dst_conn_id,
                          const struct sockaddr *addr,
                          socklen_t addr_len, std::vector<uint8_t> &token);
-    QuicSocket *create_quic_socket(uint8_t *odcid, size_t odcid_len, std::shared_ptr<UdpReceiveContext> context);
+    QuicConnection *create_quic_socket(uint8_t *odcid, size_t odcid_len, std::shared_ptr<UdpReceiveContext> context);
 
     void restart_timer(ServerContext *server_context);
 
-    bool flush_egress(QuicSocket *quic_socket, std::shared_ptr<UdpReceiveContext> context);
+    bool flush_egress(QuicConnection *quic_packet_processor, std::shared_ptr<UdpReceiveContext> context);
 
     uv_loop_t *loop;
     UdpSocket *udp_socket;

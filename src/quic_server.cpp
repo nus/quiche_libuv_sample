@@ -7,14 +7,14 @@
 
 class ServerContext : public IQuicServerConnection{
 public:
-    ServerContext(QuicSocket *q, QuicServer *s, std::shared_ptr<UdpReceiveContext> urc, const std::vector<uint8_t> &c)
+    ServerContext(QuicConnection *q, QuicServer *s, std::shared_ptr<UdpReceiveContext> urc, const std::vector<uint8_t> &c)
         : quic_socket(q)
         , quic_server(s)
         , udp_receive_context(urc)
         , connection_id(c)
         , is_on_connect_called(false) {}
     uv_timer_t timeout;
-    QuicSocket *quic_socket;
+    QuicConnection *quic_socket;
     QuicServer *quic_server;
     std::shared_ptr<UdpReceiveContext> udp_receive_context;
     const std::vector<uint8_t> connection_id;
@@ -80,7 +80,7 @@ void QuicServer::udp_socket_on_receive(ssize_t nread, uint8_t *buf, const struct
     LOG_CONNECTION_ID(header_info->dst_conn_id);
 
     ServerContext *server_context = nullptr;
-    QuicSocket *quic_socket = nullptr;
+    QuicConnection *quic_socket = nullptr;
     auto it = quic_sockets.find(header_info->dst_conn_id);
     if (it != quic_sockets.end()) {
         server_context = it->second;
@@ -175,7 +175,7 @@ void QuicServer::udp_socket_on_receive(ssize_t nread, uint8_t *buf, const struct
         LOG_CONNECTION_ID(it->first);
 
         ServerContext *server_context = it->second;
-        QuicSocket *quic_socket = server_context->quic_socket;
+        QuicConnection *quic_socket = server_context->quic_socket;
         flush_egress(quic_socket, context);
         restart_timer(server_context);
 
@@ -271,8 +271,8 @@ bool QuicServer::quic_mint_token(const std::vector<uint8_t> &dst_conn_id, const 
     return true;
 }
 
-QuicSocket *QuicServer::create_quic_socket(uint8_t *odcid, size_t odcid_len, std::shared_ptr<UdpReceiveContext> context) {
-    QuicSocket *qsock = QuicSocket::accept(odcid, odcid_len);
+QuicConnection *QuicServer::create_quic_socket(uint8_t *odcid, size_t odcid_len, std::shared_ptr<UdpReceiveContext> context) {
+    QuicConnection *qsock = QuicConnection::accept(odcid, odcid_len);
     if (!qsock) {
         LOG_ERROR("QuickSocket::accept() failed.");
         return nullptr;
@@ -299,7 +299,7 @@ void QuicServer::restart_timer(ServerContext *server_context) {
     uv_timer_again(&server_context->timeout);
 }
 
-bool QuicServer::flush_egress(QuicSocket *quic_socket, std::shared_ptr<UdpReceiveContext> context) {
+bool QuicServer::flush_egress(QuicConnection *quic_socket, std::shared_ptr<UdpReceiveContext> context) {
     if (!quic_socket) {
         LOG_ERROR("quic_socket must be not null.");
         return false;
@@ -324,7 +324,7 @@ bool QuicServer::flush_egress(QuicSocket *quic_socket, std::shared_ptr<UdpReceiv
 
 void QuicServer::timeout_callback(uv_timer_t *timer) {
     ServerContext *server_context = reinterpret_cast<ServerContext*>(timer->data);
-    QuicSocket *quic_socket = server_context->quic_socket;
+    QuicConnection *quic_socket = server_context->quic_socket;
     QuicServer *quic_server = server_context->quic_server;
 
     LOG_DEBUG("timeout_callback called.");
