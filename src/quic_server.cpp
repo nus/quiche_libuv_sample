@@ -133,7 +133,7 @@ void QuicServer::udp_socket_on_receive(ssize_t nread, uint8_t *buf, const struct
     }
 
     ssize_t done = quic_socket->receive(buf, nread);
-    if (done == EQUIC_SOCKET_DONE) {
+    if (done == EQUIC_CONNECTION_DONE) {
         LOG_DEBUG("quic_socket->receive() done.");
         return;
     } else if (done < 0) {
@@ -306,7 +306,7 @@ bool QuicServer::flush_egress(QuicConnection *quic_socket, std::shared_ptr<UdpRe
     while (1) {
         uint8_t out[MAX_DATAGRAM_SIZE];
         ssize_t written = quic_socket->send(out, sizeof(out));
-        if (written == EQUIC_SOCKET_DONE) {
+        if (written == EQUIC_CONNECTION_DONE) {
             LOG_DEBUG("quic_socket->send() done.");
             break;
         } else if (written < 0) {

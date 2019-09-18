@@ -92,7 +92,7 @@ error:
             } else {
                 return EQUIC_CLIENT_INTERNAL;
             }
-        } else if ((done = quic_connection->receive(buf, read)) == EQUIC_SOCKET_DONE) {
+        } else if ((done = quic_connection->receive(buf, read)) == EQUIC_CONNECTION_DONE) {
             /* Succeeded to connect on QUIC. */
             return EQUIC_CLIENT_OK;
         } else if (done < 0) {
