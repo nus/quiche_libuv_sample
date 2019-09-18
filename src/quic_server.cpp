@@ -3,8 +3,6 @@
 
 #include "log.h"
 
-#define MAX_DATAGRAM_SIZE (1350)
-
 class ServerContext : public IQuicServerConnection{
 public:
     ServerContext(QuicConnection *q, QuicServer *s, std::shared_ptr<UdpReceiveContext> urc, const std::vector<uint8_t> &c)

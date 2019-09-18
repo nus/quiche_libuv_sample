@@ -21,6 +21,8 @@ enum equick_socket_t {
     EQUIC_SOCKET_FINAL_SIZE = -13,
 };
 
+#define MAX_DATAGRAM_SIZE (1350)
+
 class IQuicStreamIter {
 public:
     virtual bool next(uint64_t *stream_id) = 0;
@@ -44,6 +46,7 @@ public:
     bool is_closed();
 
     static QuicConnection *accept(uint8_t *odcid, size_t odcid_len);
+    static QuicConnection *connect(const char *host);
 
 
 private:
@@ -52,5 +55,7 @@ private:
     quiche_conn *q_conn;
     quiche_config *q_config;
 
-    static quiche_config *generate_quiche_config();
+    static quiche_config *generate_quiche_server_config();
+    static quiche_config *generate_quiche_client_config();
+    static bool generate_connection_id(uint8_t *buf, size_t buf_len);
 };

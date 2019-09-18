@@ -6,8 +6,6 @@
 #include <unistd.h>
 #include <sys/errno.h>
 
-#define MAX_DATAGRAM_SIZE (1350)
-
 class QuicStreamIter : public IQuicStreamIter {
 public:
     QuicStreamIter(quiche_stream_iter *i);
@@ -97,17 +95,14 @@ QuicConnection *QuicConnection::accept(uint8_t *odcid, size_t odcid_len) {
     }
 
     uint8_t cid[LOCAL_CONN_ID_LEN] = {0};
-    ssize_t rand_len = read(rng, cid, LOCAL_CONN_ID_LEN);
-    if (rand_len < 0) {
-        LOG_ERROR("read() failed. %d", errno);
-        close(rng);
+    if (!generate_connection_id(cid, LOCAL_CONN_ID_LEN)) {
+        LOG_ERROR("QuicConnection::generate_connection_id() failed.");
         return nullptr;
     }
-    close(rng);
 
-    quiche_config *config = QuicConnection::generate_quiche_config();
+    quiche_config *config = QuicConnection::generate_quiche_server_config();
     if (!config) {
-        LOG_ERROR("QuicConnection::generate_quiche_config() failed.");
+        LOG_ERROR("QuicConnection::generate_quiche_server_config() failed.");
         return nullptr;
     }
 
@@ -120,19 +115,50 @@ QuicConnection *QuicConnection::accept(uint8_t *odcid, size_t odcid_len) {
 
     std::vector<uint8_t> src_conn_id(cid, cid + LOCAL_CONN_ID_LEN);
 
-    QuicConnection *qsock = nullptr;
     try {
-        qsock = new QuicConnection(conn, config, std::move(src_conn_id));
+        return new QuicConnection(conn, config, std::move(src_conn_id));
     } catch(std::bad_alloc e) {
         LOG_ERROR("QuicConnection::QuicConnection failed. %s", e.what());
+        quiche_conn_free(conn);
+        quiche_config_free(config);
+        return nullptr;
+    }
+}
+
+QuicConnection *QuicConnection::connect(const char *host) {
+    uint8_t scid[LOCAL_CONN_ID_LEN];
+    if (!generate_connection_id(scid, LOCAL_CONN_ID_LEN)) {
+        LOG_ERROR("QuicConnection::generate_connection_id() failed.");
+        return nullptr;
+    }
+
+    quiche_config *config = QuicConnection::generate_quiche_client_config();
+    if (!config) {
+        LOG_ERROR("QuicConnection::generate_quiche_client_config() failed.");
+        return nullptr;
+    }
+
+    quiche_conn *conn = quiche_connect(host, (const uint8_t *) scid,
+                                       sizeof(scid), config);
+    if (conn == NULL) {
+        LOG_ERROR("quiche_connect() failed.");
         quiche_config_free(config);
         return nullptr;
     }
 
-    return qsock;
+    std::vector<uint8_t> src_conn_id(scid, scid + LOCAL_CONN_ID_LEN);
+
+    try {
+        return new QuicConnection(conn, config, std::move(src_conn_id));
+    } catch(std::bad_alloc e) {
+        LOG_ERROR("QuicConnection::QuicConnection failed. %s", e.what());
+        quiche_conn_free(conn);
+        quiche_config_free(config);
+        return nullptr;
+    }
 }
 
-quiche_config *QuicConnection::generate_quiche_config() {
+quiche_config *QuicConnection::generate_quiche_server_config() {
     quiche_config *config = NULL;
 
     if (!(config = quiche_config_new(QUICHE_PROTOCOL_VERSION))) {
@@ -164,4 +190,54 @@ error:
         quiche_config_free(config);
     }
     return NULL;
+}
+
+quiche_config *QuicConnection::generate_quiche_client_config() {
+    quiche_config *config = NULL;
+
+    if (!(config = quiche_config_new(QUICHE_PROTOCOL_VERSION))) {
+        LOG_ERROR("quiche_config_new() faield.");
+        goto error;
+    } else if (quiche_config_set_application_protos(config,
+        (uint8_t *) "\x05hq-22\x08http/0.9", 15)) {
+        LOG_ERROR("quiche_config_load_priv_key_from_pem_file() failed.");
+        goto error;
+    }
+
+    quiche_config_set_idle_timeout(config, 5000);
+    quiche_config_set_max_packet_size(config, MAX_DATAGRAM_SIZE);
+    quiche_config_set_initial_max_data(config, 10000000);
+    quiche_config_set_initial_max_stream_data_bidi_local(config, 1000000);
+    quiche_config_set_initial_max_stream_data_uni(config, 1000000);
+    quiche_config_set_initial_max_streams_bidi(config, 100);
+    quiche_config_set_initial_max_streams_uni(config, 100);
+    quiche_config_set_disable_migration(config, true); // TODO Set false to enable connection migration.
+
+    return config;
+
+error:
+    if (config) {
+        quiche_config_free(config);
+    }
+    return NULL;
+}
+
+bool QuicConnection::generate_connection_id(uint8_t *buf, size_t buf_len) {
+    memset(buf, 0, buf_len);
+
+    int rng = open("/dev/urandom", O_RDONLY);
+    if (rng < 0) {
+        LOG_ERROR("open(/dev/urandom) failed. %d", errno);
+        return false;
+    }
+
+    ssize_t rand_len = read(rng, &buf, buf_len);
+    if (rand_len < 0) {
+        LOG_ERROR("read() failed. %d", errno);
+        close(rng);
+        return false;
+    }
+    close(rng);
+
+    return true;
 }
