@@ -38,9 +38,11 @@ public:
     ssize_t receive(uint8_t *buf, size_t buf_len);
     ssize_t send(uint8_t *buf, size_t buf_len);
     bool is_established();
+    bool application_protocol(const uint8_t **out, size_t *out_len);
     IQuicStreamIter *readable();
     ssize_t stream_receive(uint64_t stream_id, uint8_t *buf, size_t buf_len, bool *finished);
     ssize_t stream_send(uint64_t stream_id, const uint8_t *buf, size_t buf_len, bool finished);
+    int close(bool app, uint64_t err, const uint8_t *reason, size_t reason_len);
     uint64_t timeout_as_millis();
     void on_timeout();
     bool is_closed();

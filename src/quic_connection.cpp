@@ -51,6 +51,23 @@ bool QuicConnection::is_established() {
     return !!quiche_conn_is_established(q_conn);
 }
 
+bool QuicConnection::application_protocol(const uint8_t **out, size_t *out_len) {
+    if (!out) {
+        LOG_ERROR("out must be not null.");
+        return false;
+    } else if (*out) {
+        LOG_ERROR("*out must be null.");
+        return false;
+    } else if (!out_len) {
+        LOG_ERROR("out_len must be not null.");
+        return false;
+    }
+
+    quiche_conn_application_proto(q_conn, out, out_len);
+
+    return true;
+}
+
 IQuicStreamIter *QuicConnection::readable() {
     quiche_stream_iter *iter = quiche_conn_readable(q_conn);
     if (!iter) {
@@ -75,6 +92,10 @@ ssize_t QuicConnection::stream_send(uint64_t stream_id, const uint8_t *buf, size
     return quiche_conn_stream_send(q_conn, stream_id, buf, buf_len, finished);
 }
 
+int QuicConnection::close(bool app, uint64_t err, const uint8_t *reason, size_t reason_len) {
+    return quiche_conn_close(q_conn, app, err, reason, reason_len);
+}
+
 uint64_t QuicConnection::timeout_as_millis() {
     return quiche_conn_timeout_as_millis(q_conn);
 }
@@ -88,12 +109,6 @@ bool QuicConnection::is_closed() {
 }
 
 QuicConnection *QuicConnection::accept(uint8_t *odcid, size_t odcid_len) {
-    int rng = open("/dev/urandom", O_RDONLY);
-    if (rng < 0) {
-        LOG_ERROR("open(/dev/urandom) failed. %d", errno);
-        return nullptr;
-    }
-
     uint8_t cid[LOCAL_CONN_ID_LEN] = {0};
     if (!generate_connection_id(cid, LOCAL_CONN_ID_LEN)) {
         LOG_ERROR("QuicConnection::generate_connection_id() failed.");
@@ -127,10 +142,17 @@ QuicConnection *QuicConnection::accept(uint8_t *odcid, size_t odcid_len) {
 
 QuicConnection *QuicConnection::connect(const char *host) {
     uint8_t scid[LOCAL_CONN_ID_LEN];
+
     if (!generate_connection_id(scid, LOCAL_CONN_ID_LEN)) {
         LOG_ERROR("QuicConnection::generate_connection_id() failed.");
         return nullptr;
     }
+
+    fprintf(stderr, "CONNECTIN_ID ");
+    for (int i = 0; i < LOCAL_CONN_ID_LEN; i++) {
+        fprintf(stderr, "%02x", scid[i]);
+    }
+    fprintf(stderr, "\n");
 
     quiche_config *config = QuicConnection::generate_quiche_client_config();
     if (!config) {
@@ -231,13 +253,13 @@ bool QuicConnection::generate_connection_id(uint8_t *buf, size_t buf_len) {
         return false;
     }
 
-    ssize_t rand_len = read(rng, &buf, buf_len);
+    ssize_t rand_len = read(rng, buf, buf_len);
     if (rand_len < 0) {
         LOG_ERROR("read() failed. %d", errno);
-        close(rng);
+        ::close(rng);
         return false;
     }
-    close(rng);
+    ::close(rng);
 
     return true;
 }
