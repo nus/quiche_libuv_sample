@@ -1,6 +1,8 @@
 #include "quic_client.h"
 #include "log.h"
 
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 namespace {
@@ -46,11 +48,10 @@ QuicClient::~QuicClient() {
 
 equic_client_t QuicClient::connect() {
     if (sock == -1) {
-        const struct addrinfo hints = {
-            .ai_family = PF_UNSPEC,
-            .ai_socktype = SOCK_DGRAM,
-            .ai_protocol = IPPROTO_UDP
-        };
+        struct addrinfo hints = {0};
+        hints.ai_family = PF_UNSPEC;
+        hints.ai_socktype = SOCK_DGRAM;
+        hints.ai_protocol = IPPROTO_UDP;
         struct addrinfo *peer = nullptr;
         int s = -1;
         QuicConnection *q = nullptr;

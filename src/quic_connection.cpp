@@ -2,6 +2,7 @@
 #include "quic_header_info.h"
 #include "log.h"
 
+#include <memory.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/errno.h>
