@@ -127,6 +127,8 @@ equic_client_t QuicClient::progress_while_connected() {
     } else if (!quic_connection) {
         LOG_ERROR("quic_connection must be not null. Call connect() method.");
         return EQUIC_CLIENT_ILLEGAL_STATUS;
+    } else if (quic_connection->timeout_as_millis() == 0) {
+        return EQUIC_CLIENT_ILLEGAL_TIMEOUT;
     }
 
     uint8_t buf[65535];
