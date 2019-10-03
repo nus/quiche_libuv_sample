@@ -2,6 +2,7 @@
 #include "quic_client.h"
 
 #include <unistd.h>
+#include <inttypes.h>
 #include <thread>
 #include <chrono>
 
@@ -43,7 +44,7 @@ int main(int argc, char *argv[]) {
             if (iter) {
                 uint64_t stream_id = 0;
                 while (iter->next(&stream_id)) {
-                    LOG_DEBUG("stream %lld is readable.", stream_id);
+                    LOG_DEBUG("stream %" PRIx64 " is readable.", stream_id);
 
                     uint8_t buf[1024] = {0};
                     bool finished = false;

@@ -4,6 +4,7 @@
 
 #include "quic_server.h"
 
+#include <inttypes.h>
 #include <string>
 
 namespace {
@@ -95,7 +96,7 @@ class Callback : public IQuicServerCallback {
         LOG_DEBUG("on_connect");
     }
     virtual void on_receive(IQuicServerConnection *connection, uint64_t stream_id, uint8_t *buf, size_t buf_len, bool finished) {
-        LOG_DEBUG("on_receive stream_id:%llu buf_len:%zu", stream_id, buf_len);
+        LOG_DEBUG("on_receive stream_id:%" PRIx64 " buf_len:%zu", stream_id, buf_len);
 
         char resp[] = "byez!\n";
         connection->stream_send(stream_id, (uint8_t *)resp, sizeof(resp), true);

@@ -3,6 +3,7 @@
 
 #include "log.h"
 
+#include <inttypes.h>
 #include <string.h>
 
 class ServerContext : public IQuicServerConnection{
@@ -154,7 +155,7 @@ void QuicServer::udp_socket_on_receive(ssize_t nread, uint8_t *buf, const struct
         IQuicStreamIter *iter = quic_socket->readable();
         if (iter) {
             while (iter->next(&stream_id)) {
-                LOG_DEBUG("stream %lld is readable.", stream_id);
+                LOG_DEBUG("stream %" PRIx64 " is readable.", stream_id);
 
                 uint8_t b[1024] = {0};
                 bool finished = false;
@@ -294,7 +295,7 @@ QuicConnection *QuicServer::create_quic_socket(uint8_t *odcid, size_t odcid_len,
 
 void QuicServer::restart_timer(ServerContext *server_context) {
     uint64_t millis = server_context->quic_socket->timeout_as_millis();
-    LOG_DEBUG("restart_timer: %llu", millis);
+    LOG_DEBUG("restart_timer: %" PRIx64, millis);
     uv_timer_set_repeat(&server_context->timeout, millis);
     uv_timer_again(&server_context->timeout);
 }
