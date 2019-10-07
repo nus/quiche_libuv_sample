@@ -8,9 +8,6 @@
 
 namespace {
 
-const char *HOST = "127.0.0.1";
-const char *PORT = "8080";
-
 void sleep_for(ssize_t millis) {
     std::this_thread::sleep_for(std::chrono::milliseconds(millis));
 }
@@ -18,7 +15,11 @@ void sleep_for(ssize_t millis) {
 }
 
 int main(int argc, char *argv[]) {
-    QuicClient *client = new QuicClient(HOST, PORT);
+    if (argc < 3) {
+        LOG_ERROR("Set arguments: %s <host> <port>", argv[0]);
+        return -1;
+    }
+    QuicClient *client = new QuicClient(argv[1], argv[2]);
     equic_client_t e;
 
     for (e = client->connect(); e == EQUIC_CLIENT_AGAIN; e = client->connect()) {
