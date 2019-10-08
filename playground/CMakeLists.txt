@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 3.0)
 
+
+add_executable(tcp_server
+  tcp_server/tcp_server.c
+)
+target_link_libraries(tcp_server uv_a)
+
 add_executable(udp_server
   udp_server/udp_server.c
 )
