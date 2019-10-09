@@ -23,6 +23,8 @@ static void on_read(uv_stream_t *client, ssize_t nread, const uv_buf_t *buf) {
 
     printf("%.*s", nread, buf->base);
 
+    free(buf->base);
+
     return;
 }
 
