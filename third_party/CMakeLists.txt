@@ -5,6 +5,9 @@ add_subdirectory(libuv)
 add_library(uthash INTERFACE)
 target_include_directories(uthash INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/uthash/include)
 
+# For BoringSSL in quiche
+add_subdirectory(quiche/deps/boringssl)
+
 # For quiche
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CARGO_CMD cargo build)

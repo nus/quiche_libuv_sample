@@ -1,5 +1,12 @@
 cmake_minimum_required(VERSION 3.0)
 
+add_executable(ssl_server
+  ssl_server/ssl_server.c
+)
+target_link_libraries(ssl_server uv_a)
+target_link_libraries(ssl_server crypto)
+target_link_libraries(ssl_server ssl)
+include_directories(../third_party/quiche/deps/boringssl/include)
 
 add_executable(tcp_server
   tcp_server/tcp_server.c
