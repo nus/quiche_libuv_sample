@@ -12,6 +12,12 @@ void sleep_for(ssize_t millis) {
     std::this_thread::sleep_for(std::chrono::milliseconds(millis));
 }
 
+void set_dummy_data(uint8_t *data, size_t len) {
+    for (int i = 0; i < len; i++) {
+        data[i] = '0' + (i % 10);
+    }
+}
+
 }
 
 int main(int argc, char *argv[]) {
@@ -33,13 +39,20 @@ int main(int argc, char *argv[]) {
     LOG_DEBUG("connected to host.");
 
     bool req_sent = false;
+    uint8_t r[100] = {0};
+    int count = 0;
+    set_dummy_data(r, sizeof(r));
+    int n = 0;
     while ((e = client->progress_while_connected()) == EQUIC_CLIENT_AGAIN) {
         sleep_for(30);
 
         if (!req_sent) {
-            const uint8_t r[] = "GET /index.html\r\n";
-            client->stream_send(4, r, sizeof(r), true);
-            req_sent = true;
+            n += client->stream_send(4, r, sizeof(r), count > 100);
+            printf("n: %d\n", n);
+            if (count > 100) {
+                req_sent = true;
+            }
+            count++;
         } else {
             IQuicClientStreamIter *iter = client->readable();
             if (iter) {
