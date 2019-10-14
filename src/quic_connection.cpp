@@ -149,11 +149,7 @@ QuicConnection *QuicConnection::connect(const char *host) {
         return nullptr;
     }
 
-    fprintf(stderr, "CONNECTIN_ID ");
-    for (int i = 0; i < LOCAL_CONN_ID_LEN; i++) {
-        fprintf(stderr, "%02x", scid[i]);
-    }
-    fprintf(stderr, "\n");
+    LOG_CONNECTION_ID(LOG_LEVEL_DEBUG, std::vector<uint8_t>(scid, scid + LOCAL_CONN_ID_LEN));
 
     quiche_config *config = QuicConnection::generate_quiche_client_config();
     if (!config) {

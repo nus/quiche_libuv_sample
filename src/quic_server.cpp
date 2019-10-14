@@ -31,15 +31,6 @@ public:
     }
 };
 
-static void LOG_CONNECTION_ID(const std::vector<uint8_t> &cid) {
-    fprintf(stderr, "CONNECTIN_ID ");
-    for (auto it = cid.begin(); it != cid.end(); it++) {
-        fprintf(stderr, "%02x", *it);
-    }
-
-    fprintf(stderr, "\n");
-}
-
 static void debug_log(const char *line, void *argp) {
 #if 0
     LOG_DEBUG("quiche-log %s", line);
@@ -78,7 +69,7 @@ void QuicServer::udp_socket_on_receive(ssize_t nread, uint8_t *buf, const struct
     }
 
     LOG_DEBUG("version(0x%x) type(%u)", header_info->version, header_info->type);
-    LOG_CONNECTION_ID(header_info->dst_conn_id);
+    LOG_CONNECTION_ID(LOG_LEVEL_DEBUG, header_info->dst_conn_id);
 
     ServerContext *server_context = nullptr;
     QuicConnection *quic_socket = nullptr;
@@ -173,7 +164,7 @@ void QuicServer::udp_socket_on_receive(ssize_t nread, uint8_t *buf, const struct
     }
 
     for (auto it = quic_sockets.begin(); it != quic_sockets.end(); it++) {
-        LOG_CONNECTION_ID(it->first);
+        LOG_CONNECTION_ID(LOG_LEVEL_DEBUG, it->first);
 
         ServerContext *server_context = it->second;
         QuicConnection *quic_socket = server_context->quic_socket;
@@ -288,7 +279,7 @@ QuicConnection *QuicServer::create_quic_socket(uint8_t *odcid, size_t odcid_len,
     uv_timer_start(&server_context->timeout, timeout_callback, 1000, 0);
 
     quic_sockets[qsock->src_conn_id] = server_context;
-    LOG_CONNECTION_ID(qsock->src_conn_id);
+    LOG_CONNECTION_ID(LOG_LEVEL_DEBUG, qsock->src_conn_id);
 
     return qsock;
 }
@@ -336,7 +327,7 @@ void QuicServer::timeout_callback(uv_timer_t *timer) {
     quic_server->restart_timer(server_context);
 
     if (quic_socket->is_closed()) {
-        LOG_CONNECTION_ID(server_context->connection_id);
+        LOG_CONNECTION_ID(LOG_LEVEL_DEBUG, server_context->connection_id);
         quic_server->quic_sockets.erase(server_context->connection_id);
 
         uv_timer_stop(&server_context->timeout);
