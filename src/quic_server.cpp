@@ -22,8 +22,8 @@ public:
     bool is_on_connect_called;
     IQuicServerConnection *connection;
 
-    virtual void stream_send(uint64_t stream_id, uint8_t *buf, size_t buf_len, bool finish) {
-        quic_socket->stream_send(stream_id, (const uint8_t *)buf, buf_len, finish);
+    virtual ssize_t stream_send(uint64_t stream_id, uint8_t *buf, size_t buf_len, bool finish) {
+        return quic_socket->stream_send(stream_id, (const uint8_t *)buf, buf_len, finish);
     }
 
     virtual std::vector<uint8_t> get_connection_id() {

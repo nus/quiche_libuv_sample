@@ -11,7 +11,7 @@ class ServerContext;
 
 class IQuicServerConnection {
 public:
-    virtual void stream_send(uint64_t stream_id, uint8_t *buf, size_t buf_len, bool finish) = 0;
+    virtual ssize_t stream_send(uint64_t stream_id, uint8_t *buf, size_t buf_len, bool finish) = 0;
     virtual std::vector<uint8_t> get_connection_id() = 0;
     virtual ~IQuicServerConnection() {}
 
