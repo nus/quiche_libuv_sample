@@ -26,7 +26,7 @@ public:
 
     equic_client_t connect();
     equic_client_t progress_while_connected();
-    equic_client_t stream_send(uint64_t stream_id, const uint8_t *buf, size_t buf_len, bool finished);
+    ssize_t stream_send(uint64_t stream_id, const uint8_t *buf, size_t buf_len, bool finished);
     ssize_t stream_receive(uint64_t stream_id, uint8_t *buf, size_t buf_len, bool *finished);
     IQuicClientStreamIter *readable();
     bool flush_egress();

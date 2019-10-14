@@ -204,16 +204,18 @@ received:
     }
 }
 
-equic_client_t QuicClient::stream_send(uint64_t stream_id, const uint8_t *buf, size_t buf_len, bool finished) {
+ssize_t QuicClient::stream_send(uint64_t stream_id, const uint8_t *buf, size_t buf_len, bool finished) {
     if (!quic_connection->is_established()) {
         LOG_ERROR("quic_connection is not established.");
         return EQUIC_CLIENT_ILLEGAL_STATUS;
     }
 
-    if (quic_connection->stream_send(stream_id, buf, buf_len, finished) < 0) {
+    ssize_t n = quic_connection->stream_send(stream_id, buf, buf_len, finished);
+    if (n < 0) {
         LOG_ERROR("quic_connection->stream_send() failed.");
         return EQUIC_CLIENT_INTERNAL;
     }
+    return n;
 
     return EQUIC_CLIENT_OK;
 }
