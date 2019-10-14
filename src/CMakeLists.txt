@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.0)
 
 add_executable(server
   server.cpp
+  log.cpp
   udp_socket.cpp
   quic_server.cpp
   quic_connection.cpp
@@ -23,6 +24,7 @@ endif()
 
 add_executable(client
   client.cpp
+  log.cpp
   udp_socket.cpp
   quic_client.cpp
   quic_connection.cpp
