@@ -83,6 +83,29 @@ static void on_write(uv_write_t *req, int status) {
     free(req);
 }
 
+static int flush_ssl(uv_stream_t *client, conn_ctx_t *conn_ctx, int status) {
+    if (status == SSL_ERROR_WANT_READ || status == SSL_ERROR_WANT_WRITE) {
+        char b[1024] = {0};
+        int n;
+        do {
+            n = BIO_read(conn_ctx->wbio, b, sizeof(b));
+            if (n > 0) {
+                uv_write_t *req = (uv_write_t *) malloc(sizeof(uv_write_t));
+                uv_buf_t uvbuf = uv_buf_init(b, n);
+                uv_write(req, client, &uvbuf, 1, on_write);
+            } else if (!BIO_should_retry(conn_ctx->wbio)) {
+                fprintf(stderr, "BIO_shoud_retry() failed: %d\n", n);
+                return 1;
+            }
+        } while (n > 0);
+    } else if (status != SSL_ERROR_NONE) {
+        fprintf(stderr, "SSL_accept() failed. %d\n", status);
+        return 1;
+    }
+
+    return 0;
+}
+
 static void on_read(uv_stream_t *client, ssize_t nread, const uv_buf_t *buffer) {
     conn_ctx_t *conn_ctx = (conn_ctx_t *)client->data;
     char *buf = buffer->base;
@@ -115,23 +138,8 @@ static void on_read(uv_stream_t *client, ssize_t nread, const uv_buf_t *buffer) 
             n = SSL_accept(conn_ctx->ssl);
 
             status = SSL_get_error(conn_ctx->ssl, n);
-            if (status == SSL_ERROR_WANT_READ || status == SSL_ERROR_WANT_WRITE) {
-                do {
-                    char b[1024] = {0};
-                    n = BIO_read(conn_ctx->wbio, b, sizeof(b));
-                    if (n > 0) {
-                        uv_write_t *req = (uv_write_t *) malloc(sizeof(uv_write_t));
-                        uv_buf_t uvbuf = uv_buf_init(b, n);
-                        uv_write(req, client, &uvbuf, 1, on_write);
-                    } else if (!BIO_should_retry(conn_ctx->wbio)) {
-                        fprintf(stderr, "BIO_shoud_retry() failed: %d\n", n);
-                        free(buffer->base);
-                        uv_close((uv_handle_t *) client, on_close);
-                        return;
-                    }
-                } while (n > 0);
-            } else if (status != SSL_ERROR_NONE) {
-                fprintf(stderr, "SSL_accept() failed. %d\n", status);
+            if (flush_ssl(client, conn_ctx, status)) {
+                fprintf(stderr, "flush_ssl() failed.\n");
                 free(buffer->base);
                 uv_close((uv_handle_t *) client, on_close);
                 return;
@@ -152,23 +160,8 @@ static void on_read(uv_stream_t *client, ssize_t nread, const uv_buf_t *buffer) 
         } while (n > 0);
 
         status = SSL_get_error(conn_ctx->ssl, n);
-        if (status == SSL_ERROR_WANT_READ || status == SSL_ERROR_WANT_WRITE) {
-            do {
-                char b[1024] = {0};
-                n = BIO_read(conn_ctx->wbio, b, sizeof(b));
-                if (n > 0) {
-                    uv_write_t *req = (uv_write_t *) malloc(sizeof(uv_write_t));
-                    uv_buf_t uvbuf = uv_buf_init(b, n);
-                    uv_write(req, client, &uvbuf, 1, on_write);
-                } else if (!BIO_should_retry(conn_ctx->wbio)) {
-                    fprintf(stderr, "BIO_shoud_retry() failed: %d\n", n);
-                    free(buffer->base);
-                    uv_close((uv_handle_t *) client, on_close);
-                    return;
-                }
-            } while (n > 0);
-        } else if (status != SSL_ERROR_NONE) {
-            fprintf(stderr, "SSL_accept() failed. %d\n", status);
+        if (flush_ssl(client, conn_ctx, status)) {
+            fprintf(stderr, "flush_ssl() failed.\n");
             free(buffer->base);
             uv_close((uv_handle_t *) client, on_close);
             return;
