@@ -274,7 +274,7 @@ int main() {
         return 1;
     }
 
-    uv_run(loop, UV_RUN_DEFAULT);
-
+    r = uv_run(loop, UV_RUN_DEFAULT);
     svr_ctx_delete(svr_ctx);
+    return r;
 }
