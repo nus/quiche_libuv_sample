@@ -101,11 +101,16 @@ void set_dummy_data(uint8_t *data, size_t len) {
     }
 }
 
-int main() {
+int main(int argc, char *argv[]) {
     SSL_CTX *ctx = NULL;
     client_conn_t *cli;
     int count = 100;
     uint8_t r[100] = {0};
+
+    if (argc < 3) {
+        fprintf(stderr, "Set arguments: %s <host> <port>", argv[0]);
+        return -1;
+    }
 
     SSL_library_init();
     OpenSSL_add_all_algorithms();
@@ -116,7 +121,7 @@ int main() {
     if (!(ctx = ssl_ctx_new())) {
         fprintf(stderr, "ssl_ctx_new() failed.\n");
         goto err;
-    } else if (!(cli = client_conn_new("127.0.0.1", "8080", ctx))) {
+    } else if (!(cli = client_conn_new(argv[1], argv[2], ctx))) {
         fprintf(stderr, "ssl_ctx_new() failed.\n");
         goto err;
     }
