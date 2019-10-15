@@ -98,6 +98,10 @@ static int flush_ssl(uv_stream_t *client, conn_ctx_t *conn_ctx, int status) {
                 return 1;
             }
         } while (n > 0);
+    } else if (status == SSL_ERROR_ZERO_RETURN && SSL_get_shutdown(conn_ctx->ssl) & SSL_RECEIVED_SHUTDOWN) {
+        // Shut down...
+        fprintf(stderr, "shutdowned.\n");
+        return 2;
     } else if (status != SSL_ERROR_NONE) {
         fprintf(stderr, "SSL_accept() failed. %d\n", status);
         return 1;
@@ -114,6 +118,8 @@ static void on_read(uv_stream_t *client, ssize_t nread, const uv_buf_t *buffer) 
         if (nread != UV_EOF) {
             fprintf(stderr, "on_read() failed: %s\n", uv_err_name(nread));
         }
+        fprintf(stderr, "SSL_get_state() :%d\n", SSL_get_state(conn_ctx->ssl));
+
         free(buffer->base);
         uv_close((uv_handle_t *) client, on_close);
         return;
@@ -124,7 +130,7 @@ static void on_read(uv_stream_t *client, ssize_t nread, const uv_buf_t *buffer) 
         int status;
 
         n = BIO_write(conn_ctx->rbio, buf, nread);
-        if (n<=0) {
+        if (n <= 0) {
             fprintf(stderr, "BIO_write() failed: %d\n", n);
             free(buffer->base);
             uv_close((uv_handle_t *) client, on_close);
@@ -139,7 +145,7 @@ static void on_read(uv_stream_t *client, ssize_t nread, const uv_buf_t *buffer) 
 
             status = SSL_get_error(conn_ctx->ssl, n);
             if (flush_ssl(client, conn_ctx, status)) {
-                fprintf(stderr, "flush_ssl() failed.\n");
+                fprintf(stderr, "flush_ssl() 1 failed.\n");
                 free(buffer->base);
                 uv_close((uv_handle_t *) client, on_close);
                 return;
@@ -156,12 +162,13 @@ static void on_read(uv_stream_t *client, ssize_t nread, const uv_buf_t *buffer) 
             if (n > 0) {
                 // decypted buffer.
                 printf("%.*s", (int) n, b);
+                fflush(stdout);
             }
         } while (n > 0);
 
         status = SSL_get_error(conn_ctx->ssl, n);
         if (flush_ssl(client, conn_ctx, status)) {
-            fprintf(stderr, "flush_ssl() failed.\n");
+            fprintf(stderr, "flush_ssl() 2 failed.\n");
             free(buffer->base);
             uv_close((uv_handle_t *) client, on_close);
             return;
@@ -169,8 +176,6 @@ static void on_read(uv_stream_t *client, ssize_t nread, const uv_buf_t *buffer) 
     }
 
     free(buffer->base);
-
-    return;
 }
 
 static void on_connect(uv_stream_t *server, int status) {
