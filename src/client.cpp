@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
     set_dummy_data(r, sizeof(r));
     int n = 0;
     while ((e = client->progress_while_connected()) == EQUIC_CLIENT_AGAIN) {
-        sleep_for(30);
+        sleep_for(1);
 
         if (!req_sent) {
             n += client->stream_send(4, r, sizeof(r), count > 100);

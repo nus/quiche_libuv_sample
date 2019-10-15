@@ -72,6 +72,8 @@
         "thread": "cpp",
         "unordered_map": "cpp",
         "unordered_set": "cpp",
-        "uv.h": "c"
+        "uv.h": "c",
+        "stack": "c",
+        "bit": "cpp"
     }
 }

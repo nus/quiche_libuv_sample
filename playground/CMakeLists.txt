@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 3.0)
 
+add_executable(ssl_client
+  ssl_client/ssl_client.c
+)
+target_link_libraries(ssl_client crypto)
+target_link_libraries(ssl_client ssl)
+
 add_executable(ssl_server
   ssl_server/ssl_server.c
 )
