@@ -5,6 +5,8 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <netdb.h>
 #include <unistd.h>
 
@@ -95,20 +97,50 @@ static void client_conn_delete(client_conn_t *cli) {
     free(cli);
 }
 
-void set_dummy_data(uint8_t *data, size_t len) {
-    for (int i = 0; i < len; i++) {
-        data[i] = '0' + (i % 10);
+static off_t read_file(const char *path, char **buffer) {
+    int fd = -1;
+    FILE *fp = 0;
+    struct stat stbuf;
+    char *buf = NULL;
+
+    if ((fd = open(path, O_RDONLY)) == 1) {
+        fprintf(stderr, "open(%s) failed: %d\n", path, errno);
+        goto err;
+    } else if (fstat(fd, &stbuf) == -1) {
+        fprintf(stderr, "fstat() failed: %d\n", errno);
+        goto err;
+    } else if (!(fp = fdopen(fd, "r"))) {
+        fprintf(stderr, "fdopen() failed: %d\n", errno);
+        goto err;
+    } else if (!(buf = calloc(1, stbuf.st_size))) {
+        fprintf(stderr, "calloc() failed.\n");
+        goto err;
+    } else if ((fread(buf, sizeof(char), stbuf.st_size, fp)) != stbuf.st_size) {
+        fprintf(stderr, "fread() failed.\n");
+        goto err;
+    } else {
+        *buffer = buf;
+        return stbuf.st_size;
     }
+
+err:
+    if (buf) free(buf);
+    if (fp) fclose(fp);
+    if (fd == -1) close(fd);
+
+    return -1;
 }
 
 int main(int argc, char *argv[]) {
     SSL_CTX *ctx = NULL;
     client_conn_t *cli;
-    int count = 100;
-    uint8_t r[100] = {0};
+    off_t buf_len;
+    char *buf =  NULL;
+    int i;
+    size_t payload_len = 1024;
 
-    if (argc < 3) {
-        fprintf(stderr, "Set arguments: %s <host> <port>", argv[0]);
+    if (argc < 4) {
+        fprintf(stderr, "Set arguments: %s <host> <port> <file_to_upload>", argv[0]);
         return -1;
     }
 
@@ -121,14 +153,20 @@ int main(int argc, char *argv[]) {
     if (!(ctx = ssl_ctx_new())) {
         fprintf(stderr, "ssl_ctx_new() failed.\n");
         goto err;
+    } else if ((buf_len = read_file(argv[3], &buf)) < 0) {
+        fprintf(stderr, "read_file() failed.\n");
+        goto err;
     } else if (!(cli = client_conn_new(argv[1], argv[2], ctx))) {
         fprintf(stderr, "ssl_ctx_new() failed.\n");
         goto err;
     }
 
-    set_dummy_data(r, sizeof(r));
-    for (count = 0; count < 100; count++) {
-        SSL_write(cli->ssl, r, sizeof(r));
+    for (i = 0; i < buf_len; i += payload_len) {
+        int len = (buf_len - i < payload_len) ? buf_len - i : payload_len;
+        if (SSL_write(cli->ssl, buf + i, len) < len) {
+            fprintf(stderr, "SSL_write() failed.\n");
+            goto err;
+        }
         usleep(1 * 1000);
     }
     
@@ -137,12 +175,14 @@ int main(int argc, char *argv[]) {
 
     client_conn_delete(cli);
     SSL_CTX_free(ctx);
+    free(buf);
 
     return 0;
 
 err:
     if (cli) client_conn_delete(cli);
     if (ctx) SSL_CTX_free(ctx);
+    if (buf) free(buf);
 
     return 1;
 }
