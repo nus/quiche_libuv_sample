@@ -8,7 +8,7 @@ enum equic_client_t {
     EQUIC_CLIENT_INTERNAL = -2,
     EQUIC_CLIENT_CLOSED = -3,
     EQUIC_CLIENT_ILLEGAL_STATUS = -4,
-    EQUIC_CLIENT_ILLEGAL_TIMEOUT = -5,
+    EQUIC_CLIENT_TIMEOUT = -5,
 };
 
 #define MAX_DATAGRAM_SIZE (1350)
@@ -26,6 +26,7 @@ public:
 
     equic_client_t connect();
     equic_client_t progress_while_connected();
+    equic_client_t progress_while_timeout();
     ssize_t stream_send(uint64_t stream_id, const uint8_t *buf, size_t buf_len, bool finished);
     ssize_t stream_receive(uint64_t stream_id, uint8_t *buf, size_t buf_len, bool *finished);
     IQuicClientStreamIter *readable();

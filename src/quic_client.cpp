@@ -128,7 +128,15 @@ equic_client_t QuicClient::progress_while_connected() {
         LOG_ERROR("quic_connection must be not null. Call connect() method.");
         return EQUIC_CLIENT_ILLEGAL_STATUS;
     } else if (quic_connection->timeout_as_millis() == 0) {
-        return EQUIC_CLIENT_ILLEGAL_TIMEOUT;
+        quic_connection->on_timeout();
+        flush_egress();
+        if (quic_connection->is_closed()) {
+            LOG_ERROR("quic_connection is timeout.");
+            return EQUIC_CLIENT_TIMEOUT;
+        } else {
+            LOG_DEBUG("progress_while_connected() 2");
+            return EQUIC_CLIENT_AGAIN;
+        }
     }
 
     uint8_t buf[65535];
@@ -139,6 +147,7 @@ equic_client_t QuicClient::progress_while_connected() {
         if ((errno == EWOULDBLOCK) || (errno == EAGAIN)) {
             goto received;
         } else {
+            LOG_ERROR("recv() failed: %d", errno);
             return EQUIC_CLIENT_INTERNAL;
         }
     } else if ((done = quic_connection->receive(buf, read)) == EQUIC_CONNECTION_DONE) {
