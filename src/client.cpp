@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
         if (!req_sent) {
             bool fin = (buf_len - cur) <= payload_len;
             int len = fin ? (buf_len - cur) : payload_len;
-            cur += client->stream_send(4, (uint8_t *) buf, len, fin);
+            cur += client->stream_send(4, (uint8_t *) buf + cur, len, fin);
 
             if (fin) {
                 req_sent = true;
