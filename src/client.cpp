@@ -10,8 +10,12 @@
 
 namespace {
 
-void sleep_for(ssize_t millis) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(millis));
+void sleep_for_millis(ssize_t millis) {
+    std::this_thread::sleep_for(std::chrono::nanoseconds(millis));
+}
+
+void sleep_for_nanos(ssize_t nanos) {
+    std::this_thread::sleep_for(std::chrono::nanoseconds(nanos));
 }
 
 static off_t read_file(const char *path, char **buffer) {
@@ -65,7 +69,7 @@ int main(int argc, char *argv[]) {
     QuicClient *client = new QuicClient(argv[1], argv[2]);
     equic_client_t e;
     for (e = client->connect(); e == EQUIC_CLIENT_AGAIN; e = client->connect()) {
-        sleep_for(30);
+        sleep_for_millis(30);
     }
     if (e != EQUIC_CLIENT_OK) {
         LOG_ERROR("client->connect() failed. %d", e);
@@ -78,7 +82,7 @@ int main(int argc, char *argv[]) {
     size_t payload_len = 65535;
     int cur = 0;
     while ((e = client->progress_while_connected()) == EQUIC_CLIENT_AGAIN) {
-        sleep_for(1);
+        // sleep_for_nanos(10);
 
         if (!req_sent) {
             bool fin = (buf_len - cur) <= payload_len;
