@@ -198,8 +198,8 @@ quiche_config *QuicConnection::generate_quiche_server_config() {
     quiche_config_set_idle_timeout(config, 5000);
     quiche_config_set_max_packet_size(config, MAX_DATAGRAM_SIZE);
     quiche_config_set_initial_max_data(config, 10000000);
-    quiche_config_set_initial_max_stream_data_bidi_local(config, 1000000);
-    quiche_config_set_initial_max_stream_data_bidi_remote(config, 1000000);
+    quiche_config_set_initial_max_stream_data_bidi_local(config, 100000000);
+    quiche_config_set_initial_max_stream_data_bidi_remote(config, 100000000);
     quiche_config_set_initial_max_streams_bidi(config, 100);
 
     return config;
@@ -226,8 +226,8 @@ quiche_config *QuicConnection::generate_quiche_client_config() {
     quiche_config_set_idle_timeout(config, 5000);
     quiche_config_set_max_packet_size(config, MAX_DATAGRAM_SIZE);
     quiche_config_set_initial_max_data(config, 10000000);
-    quiche_config_set_initial_max_stream_data_bidi_local(config, 1000000);
-    quiche_config_set_initial_max_stream_data_uni(config, 1000000);
+    quiche_config_set_initial_max_stream_data_bidi_local(config, 100000000);
+    quiche_config_set_initial_max_stream_data_uni(config, 100000000);
     quiche_config_set_initial_max_streams_bidi(config, 100);
     quiche_config_set_initial_max_streams_uni(config, 100);
     quiche_config_set_disable_active_migration(config, true); // TODO Set false to enable connection migration.

@@ -148,7 +148,7 @@ void QuicServer::udp_socket_on_receive(ssize_t nread, uint8_t *buf, const struct
             while (iter->next(&stream_id)) {
                 LOG_DEBUG("stream %" PRIx64 " is readable.", stream_id);
 
-                uint8_t b[1024] = {0};
+                uint8_t b[65535] = {0};
                 bool finished = false;
                 ssize_t recv_len = quic_socket->stream_receive(stream_id, b, sizeof(b), &finished);
                 if (recv_len < 0) {

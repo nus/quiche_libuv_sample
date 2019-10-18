@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
     LOG_DEBUG("connected to host.");
 
     bool req_sent = false;
-    size_t payload_len = 1024;
+    size_t payload_len = 65535;
     int cur = 0;
     while ((e = client->progress_while_connected()) == EQUIC_CLIENT_AGAIN) {
         sleep_for(1);
