@@ -92,16 +92,20 @@ private:
 };
 
 class Callback : public IQuicServerCallback {
+    int n;
     virtual void on_connect(IQuicServerConnection *connection) {
         LOG_DEBUG("on_connect");
+        n = 0;
     }
     virtual void on_receive(IQuicServerConnection *connection, uint64_t stream_id, uint8_t *buf, size_t buf_len, bool finished) {
-        LOG_DEBUG("on_receive stream_id:%" PRIx64 " buf_len:%zu", stream_id, buf_len);
+        n += buf_len;
+        LOG_DEBUG("on_receive stream_id:%" PRIx64 " buf_len:%zu, n:%d", stream_id, buf_len, n);
         printf("%.*s", (int) buf_len, buf);
 
         if (finished) {
             char resp[] = "byez!\n";
             connection->stream_send(stream_id, (uint8_t *)resp, sizeof(resp), true);
+            fprintf(stderr, "byez send.\n");
         }
     }
     virtual void on_disconnect(IQuicServerConnection *connection) {

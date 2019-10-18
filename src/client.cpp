@@ -84,11 +84,11 @@ int main(int argc, char *argv[]) {
             bool fin = (buf_len - cur) <= payload_len;
             int len = fin ? (buf_len - cur) : payload_len;
             cur += client->stream_send(4, (uint8_t *) buf + cur, len, fin);
+            LOG_DEBUG("fin: %d, cur: %d, len: %d", fin, cur, len);
 
             if (fin) {
                 req_sent = true;
             }
-            printf("cur: %d\n", cur);
         } else {
             IQuicClientStreamIter *iter = client->readable();
             if (iter) {
