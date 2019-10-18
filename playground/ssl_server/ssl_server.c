@@ -157,7 +157,7 @@ static void on_read(uv_stream_t *client, ssize_t nread, const uv_buf_t *buffer) 
         }
 
         do {
-            char b[1024] = {0};
+            char b[65535] = {0};
             n = SSL_read(conn_ctx->ssl, b, sizeof(b));
             if (n > 0) {
                 // decypted buffer.

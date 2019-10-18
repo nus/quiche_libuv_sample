@@ -137,7 +137,7 @@ int main(int argc, char *argv[]) {
     off_t buf_len;
     char *buf =  NULL;
     int i;
-    size_t payload_len = 1024;
+    size_t payload_len = 65535;
 
     if (argc < 4) {
         fprintf(stderr, "Set arguments: %s <host> <port> <file_to_upload>", argv[0]);
