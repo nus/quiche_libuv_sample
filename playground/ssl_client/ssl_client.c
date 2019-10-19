@@ -138,6 +138,8 @@ int main(int argc, char *argv[]) {
     char *buf =  NULL;
     int i;
     size_t payload_len = 65535;
+    char buf_read[1024];
+    char len_read;
 
     if (argc < 4) {
         fprintf(stderr, "Set arguments: %s <host> <port> <file_to_upload>", argv[0]);
@@ -170,6 +172,9 @@ int main(int argc, char *argv[]) {
         usleep(1 * 1000);
     }
     
+    len_read = SSL_read(cli->ssl, buf_read, sizeof(buf_read));
+    printf("%.*s", len_read, buf_read);
+
     while (SSL_shutdown(cli->ssl) == 0)
         printf("SSL_shutdown...\n");
 

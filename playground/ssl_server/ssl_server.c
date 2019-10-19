@@ -163,6 +163,12 @@ static void on_read(uv_stream_t *client, ssize_t nread, const uv_buf_t *buffer) 
                 // decypted buffer.
                 printf("%.*s", (int) n, b);
                 fflush(stdout);
+
+                if (b[n-1] == '\n') {
+                    char r[] = "byez!\n";
+                    printf("Finished to read.\n");
+                    SSL_write(conn_ctx->ssl, r, sizeof(r));
+                }
             }
         } while (n > 0);
 
