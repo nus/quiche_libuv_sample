@@ -169,9 +169,8 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "SSL_write() failed.\n");
             goto err;
         }
-        usleep(1 * 1000);
     }
-    
+
     len_read = SSL_read(cli->ssl, buf_read, sizeof(buf_read));
     printf("%.*s", len_read, buf_read);
 
