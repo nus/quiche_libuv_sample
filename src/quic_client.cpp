@@ -263,7 +263,7 @@ bool QuicClient::flush_egress() {
 
         ssize_t sent = ::send(sock, out, written, 0);
         if (sent != written) {
-            LOG_ERROR("send() failed. %d", errno);
+            LOG_ERROR("send() failed. %d, %d, %d", sent, written, errno);
             return false;
         }
         LOG_DEBUG("::send() %zd", sent);
