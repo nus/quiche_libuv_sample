@@ -97,7 +97,6 @@ void timeout_callback(uv_timer_t *timer) {
     quic_connection->on_timeout();
     if (!flush_egress(client_ctx)) {
         LOG_ERROR("flush_egress() failed.");
-        uv_close((uv_handle_t*) timer, NULL);
         return;
     }
 
@@ -185,7 +184,6 @@ void on_read(uv_udp_t *request, ssize_t nread, const uv_buf_t *buf, const struct
 
     if (!flush_egress(client_ctx)) {
         LOG_ERROR("flush_egress() failed.");
-        uv_close((uv_handle_t*) request, NULL);
     }
 }
 
