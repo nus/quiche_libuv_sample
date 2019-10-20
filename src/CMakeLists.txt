@@ -44,5 +44,24 @@ if(APPLE)
   target_link_libraries(client "-framework Security")
 endif()
 
+add_executable(uv_client
+  uv_client.cpp
+  log.cpp
+  quic_connection.cpp
+  quic_header_info.cpp
+)
+
+set_target_properties(uv_client PROPERTIES
+    CXX_STANDARD 11
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF
+)
+
+target_link_libraries(uv_client uv_a)
+target_link_libraries(uv_client quiche)
+if(APPLE)
+  target_link_libraries(uv_client "-framework Security")
+endif()
+
 include_directories("../third_party/libuv/include")
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
