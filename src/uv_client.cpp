@@ -3,6 +3,8 @@
 #include <uv.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <memory.h>
 
 namespace {
 
