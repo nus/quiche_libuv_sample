@@ -109,6 +109,17 @@ bool QuicConnection::is_closed() {
     return !!quiche_conn_is_closed(q_conn);
 }
 
+void QuicConnection::stats(QuicConnectionStats *s) {
+    quiche_stats qs;
+    quiche_conn_stats(q_conn, &qs);
+
+    s->recv = qs.recv;
+    s->sent = qs.sent;
+    s->lost = qs.lost;
+    s->rtt = qs.rtt;
+    s->cwnd = qs.cwnd;
+}
+
 QuicConnection *QuicConnection::accept(uint8_t *odcid, size_t odcid_len) {
     uint8_t cid[LOCAL_CONN_ID_LEN] = {0};
     if (!generate_connection_id(cid, LOCAL_CONN_ID_LEN)) {

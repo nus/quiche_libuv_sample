@@ -29,6 +29,23 @@ public:
     virtual ~IQuicStreamIter() {};
 };
 
+typedef struct {
+    // The number of QUIC packets received on this connection.
+    size_t recv;
+
+    // The number of QUIC packets sent on this connection.
+    size_t sent;
+
+    // The number of QUIC packets that were lost.
+    size_t lost;
+
+    // The estimated round-trip time of the connection (in nanoseconds).
+    uint64_t rtt;
+
+    // The size in bytes of the connection's congestion window.
+    size_t cwnd;
+} QuicConnectionStats;
+
 class QuicConnection {
 public:
     ~QuicConnection();
@@ -46,6 +63,7 @@ public:
     uint64_t timeout_as_millis();
     void on_timeout();
     bool is_closed();
+    void stats(QuicConnectionStats *s);
 
     static QuicConnection *accept(uint8_t *odcid, size_t odcid_len);
     static QuicConnection *connect(const char *host);
